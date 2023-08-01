@@ -67,7 +67,6 @@ class LoginScreen extends HookWidget {
                   controller.value =
                       StateMachineController.fromArtboard(art, 'State Machine 1') as StateMachineController;
                   art.addController(controller.value);
-                  debugPrint(controller.value.inputs.toList().map((e) => (e.name, e.type, e.value)).toString());
                 },
               ),
             ),
