@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flare_flutter/flare_actor.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:interactive_login/tracking_text_input.dart';
+import 'package:rive/rive.dart';
 
 void main() => runApp(MyApp());
 
@@ -13,148 +15,194 @@ class MyApp extends StatelessWidget {
       ),
       home: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: Color.fromRGBO(38, 50, 56, 1),
+        backgroundColor: Color(0xFFD6E2EA),
         body: LoginScreen(),
       ),
     );
   }
 }
 
-class LoginScreen extends StatefulWidget {
-  @override
-  _LoginScreenState createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  String correctPassword = 'admin';
-  String animationType = 'idle';
-
-  final passwordController = TextEditingController();
-
-  final passwordFocusNode = FocusNode();
-  final usernameFocusNode = FocusNode();
-
-  @override
-  void initState() {
-    passwordFocusNode.addListener(() {
-      if (passwordFocusNode.hasFocus) {
-        setState(() {
-          animationType = 'hands_up';
-        });
-      } else {
-        setState(() {
-          animationType = 'hands_down';
-        });
-      }
-    });
-
-    usernameFocusNode.addListener(() {
-      if (usernameFocusNode.hasFocus) {
-        setState(() {
-          animationType = 'test';
-        });
-      } else {
-        setState(() {
-          animationType = 'idle';
-        });
-      }
-    });
-
-    super.initState();
-  }
-
+class LoginScreen extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(
-        horizontal: 20,
-      ),
-      child: Column(
-        children: <Widget>[
-          Container(
-            height: 300,
-            width: 300,
-            child: FlareActor(
-              'assets/Teddy.flr',
-              alignment: Alignment.bottomCenter,
-              fit: BoxFit.contain,
-              animation: animationType,
-              callback: (animation) {
-                setState(() {
-                  animationType = 'idle';
-                });
-              },
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.all(
-                Radius.circular(20),
+    final passwordFocusNode = useFocusNode();
+    final controller = useState<StateMachineController>(StateMachineController(StateMachine()));
+    final passwordController = useTextEditingController();
+
+    final isObscured = useState(true);
+
+    passwordFocusNode.addListener(() {
+      if (passwordFocusNode.hasFocus) {
+        if (isObscured.value) {
+          controller.value.handsUp();
+        }
+      } else {
+        controller.value.handsDown();
+      }
+    });
+
+    final usernameFocusNode = useFocusNode();
+    usernameFocusNode.addListener(() {
+      if (usernameFocusNode.hasFocus) {
+        controller.value.lookAt(100);
+      } else {
+        controller.value.idle();
+      }
+    });
+
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Container(
+              height: 300,
+              width: 300,
+              child: RiveAnimation.asset(
+                'teddy.riv',
+                onInit: (art) {
+                  controller.value =
+                      StateMachineController.fromArtboard(art, 'State Machine 1') as StateMachineController;
+                  art.addController(controller.value);
+                  debugPrint(controller.value.inputs.toList().map((e) => (e.name, e.type, e.value)).toString());
+                },
               ),
-              color: Colors.white,
             ),
-            child: Column(
-              children: <Widget>[
-                TextFormField(
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hintText: "Username",
-                    contentPadding: EdgeInsets.all(20),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(20),
+                ),
+                color: Colors.white,
+              ),
+              child: Column(
+                children: <Widget>[
+                  TrackingTextInput(
+                    controller: useTextEditingController(),
+                    focusNode: usernameFocusNode,
+                    enable: true,
+                    label: "Username",
                   ),
-                  focusNode: usernameFocusNode,
-                ),
-                Divider(),
-                TextFormField(
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hintText: "Password",
-                    contentPadding: EdgeInsets.all(20),
+                  Divider(
+                    height: 1,
+                    thickness: 1,
                   ),
-                  controller: passwordController,
-                  focusNode: passwordFocusNode,
-                ),
-              ],
-            ),
-          ),
-          Container(
-            width: double.infinity,
-            height: 70,
-            padding: EdgeInsets.only(top: 20),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                primary: Colors.pink,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
+                  TrackingTextInput(
+                    controller: passwordController,
+                    focusNode: passwordFocusNode,
+                    enable: true,
+                    label: "Password",
+                    isObscured: isObscured.value,
+                    suffixIcon: Material(
+                      type: MaterialType.transparency,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: IconButton(
+                          splashRadius: 20,
+                          onPressed: () {
+                            isObscured.value = !isObscured.value;
+                            if (passwordFocusNode.hasFocus) {
+                              if (isObscured.value) {
+                                controller.value.handsUp();
+                              } else {
+                                controller.value.handsDown();
+                              }
+                            }
+                          },
+                          icon: Icon(
+                            isObscured.value ? Icons.visibility_off : Icons.visibility,
+                            color: Colors.teal,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              onPressed: () => signIn(),
-              child: Text(
-                "Submit",
-                style: TextStyle(color: Colors.white),
+            ),
+            Container(
+              width: double.infinity,
+              height: 70,
+              padding: EdgeInsets.only(top: 20),
+              child: HookBuilder(
+                builder: (context) {
+                  final isLoading = useState(false);
+
+                  return ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    onPressed: () async {
+                      controller.value.handsDown();
+                      isLoading.value = true;
+                      await Future<void>.delayed(const Duration(milliseconds: 1500));
+                      isLoading.value = false;
+                      if (passwordController.text == "admin") {
+                        controller.value.success();
+                      } else {
+                        controller.value.fail();
+                      }
+                    },
+                    child: Builder(
+                      builder: (context) {
+                        return isLoading.value
+                            ? Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: CircularProgressIndicator(color: Colors.white),
+                                ),
+                              )
+                            : Text(
+                                "Submit",
+                                style: TextStyle(color: Colors.white),
+                              );
+                      },
+                    ),
+                  );
+                },
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+}
 
-  void signIn() {
-    if (animationType == 'hands_up') {
-      setState(() {
-        animationType = 'hands_down';
-      });
-    }
+extension on StateMachineController {
+  void idle() {
+    findInput<bool>("Check")?.change(false);
+  }
 
-    if (passwordController.text.compareTo(correctPassword) == 0) {
-      setState(() {
-        animationType = "success";
-      });
-    } else {
-      setState(() {
-        animationType = "fail";
-      });
-    }
+  void lookAt(double value) {
+    findInput<bool>("Check")?.change(true);
+    findInput<double>("Look")?.change(value);
+  }
+
+  void handsUp() {
+    findInput<bool>("Check")?.change(false);
+    findInput<bool>("hands_up")?.change(true);
+  }
+
+  void handsDown() {
+    findInput<bool>("Check")?.change(false);
+    findInput<bool>("hands_up")?.change(false);
+  }
+
+  void success() {
+    findInput<bool>("Check")?.change(false);
+    findSMI<SMITrigger>("success")?.fire();
+  }
+
+  void fail() {
+    findInput<bool>("Check")?.change(false);
+    findSMI<SMITrigger>("fail")?.fire();
   }
 }
