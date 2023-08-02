@@ -84,6 +84,9 @@ class LoginScreen extends HookWidget {
                     focusNode: usernameFocusNode,
                     enable: true,
                     label: "Username",
+                    onCaretMoved: (globalCaretPosition) {
+                      controller.value.lookAt(globalCaretPosition.dx / MediaQuery.of(context).size.width * 100);
+                    },
                   ),
                   Divider(
                     height: 1,
