@@ -1,20 +1,56 @@
-name: Flutter Web Deploy
+# Note:
+# Make sure that the github pages is already set to Github Actions, otherwise the workflow will fail.
+#
+# Author: Shubham Gupta
+# GitHub: https://github.com/shubham-gupta-16/
+# Created On: 5 Aug, 2022
+# Updated On: 12 Jan, 2023
+
+name: CI
 on:
   push:
     branches:
-      - main
-jobs:
-  build:    
-    runs-on: ubuntu-latest
+      - master
+#  pull_request:
+#    branches:
+#      - master
 
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  flutter_web_deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+# If you want to change the directory to run commands
+#    defaults:
+#      run:
+#        working-directory: ./sub-folder
     steps:
-      - uses: actions/checkout@v3
-      - uses: subosito/flutter-action@v2
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.7.3
-      - run: flutter build web --release --base-href /flutter_web/
-      - run: git config user.name github-actions
-      - run: git config user.email github-actions@github.com
-      - run: git --work-tree build/web add --all
-      - run: git commit -m "Automatic deployment by github-actions"
-      - run: git push origin HEAD:gh-pages --force
+          flutter-version: '3.7.3'
+      - run: flutter pub get
+      - run: flutter build web --base-href /${{ github.event.repository.name }}/
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          name: web-build
+#          path: sub-folder/build/web // if working-directory is changed
+          path: build/web
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@main
