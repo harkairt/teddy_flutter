@@ -61,12 +61,9 @@ class LoginScreen extends HookWidget {
             Container(
               height: 300,
               width: 300,
-              child: 
-RiveAnimation.asset(
-  'teddy.riv',
-  height: 300,
-  width: 300,
-),
+              child: RiveAnimation.asset(
+                'teddy.riv',
+              ),
             ),
             Container(
               decoration: BoxDecoration(
