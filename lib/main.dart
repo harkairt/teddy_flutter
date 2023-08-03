@@ -61,14 +61,12 @@ class LoginScreen extends HookWidget {
             Container(
               height: 300,
               width: 300,
-              child: RiveAnimation.asset(
-                'teddy.riv',
-                onInit: (art) {
-                  controller.value =
-                      StateMachineController.fromArtboard(art, 'State Machine 1') as StateMachineController;
-                  art.addController(controller.value);
-                },
-              ),
+              child: 
+RiveAnimation.asset(
+  'teddy.riv',
+  height: 300,
+  width: 300,
+),
             ),
             Container(
               decoration: BoxDecoration(
