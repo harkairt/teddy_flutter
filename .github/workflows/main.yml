@@ -10,6 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.7.3
       - run: flutter build web --release --base-href /flutter_web/
       - run: git config user.name github-actions
       - run: git config user.email github-actions@github.com
