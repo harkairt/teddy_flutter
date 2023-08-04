@@ -32,10 +32,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-# If you want to change the directory to run commands
-#    defaults:
-#      run:
-#        working-directory: ./sub-folder
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -48,8 +44,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
-          name: web-build
-#          path: sub-folder/build/web // if working-directory is changed
           path: build/web
       - name: Deploy to GitHub Pages
         id: deployment
